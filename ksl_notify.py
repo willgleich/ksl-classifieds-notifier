@@ -36,8 +36,8 @@ def get_smtp(email):
     elif hostname == 'comcast.net':
         smtp_server = 'smtp.comcast.net:587'
     else:
-        logging.error("Unknown email server, please provide --smtpserver")
-        print("Unknown email server, please provide --smtpserver",
+        logging.error("Unknown email server, please provide --smtpserver or set the KSL_SMTP environment variable")
+        print("Unknown email server, please provide --smtpserver or set the KSL_SMTP environment variable",
               file=sys.stderr)
         sys.exit(1)
     return smtp_server
@@ -134,14 +134,25 @@ def main(args):
 
     # Get needed controls
     loop_delay = args.pop('time') * 60
-    email = args.pop('email', None)
-    smtpserver = args.pop('smtpserver', None)
+    if "KSL_EMAIL" in os.environ:
+        email = os.environ.get("KSL_EMAIL")
+    else:
+        email = args.pop('email', None)
+    if "KSL_SMTP" in os.environ:
+        smtpserver = os.environ.get("KSL_SMTP")
+    else:
+        smtpserver = args.pop('smtpserver', None)
+
     if not email:
         email = input("Enter email address to use: ")
     if not smtpserver:
         smtpserver = get_smtp(email)
-    passwd = getpass.getpass("Enter password for sending email from {email}: "
-                             .format(email=email))
+
+    if "KSL_EMAIL_PASS" in os.environ:
+        passwd = os.environ.get("KSL_EMAIL_PASS")
+    else:
+        passwd = getpass.getpass("Enter password for sending email from {email}: "
+                                 .format(email=email))
     test_email_login(email, passwd, smtpserver)
 
     # Fork to background
