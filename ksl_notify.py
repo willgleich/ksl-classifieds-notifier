@@ -156,7 +156,10 @@ def main(args):
     test_email_login(email, passwd, smtpserver)
 
     # Fork to background
-    foreground = args.pop('foreground')
+    if "KSL_EMAIL" in os.environ:
+        foreground = True
+    else:
+        foreground = args.pop('foreground')
     if not foreground:
         pid = os.fork()
         if pid:
@@ -168,7 +171,12 @@ def main(args):
     seen = {}
 
     # find our results
-    queries = args.pop('query')
+    environ_queries = [v for k, v in os.environ.items() if k.startswith('KSL_QUERY')]
+    if len(environ_queries) > 0:
+        queries = environ_queries
+        args.pop('query')
+    else:
+        queries = args.pop('query')
     exception_thresh = int(args.pop('emailexceptions')) * 10
     exception_count = 0
     today = None
@@ -229,7 +237,7 @@ if __name__ == '__main__':
                    'to stdout')
     p.add_argument('--loglevel', default="INFO",
                    help='Choose level: debug, info, warning')
-    p.add_argument('query', nargs='+', action='store', default=None,
+    p.add_argument('query', nargs='*', action='store', default=None,
                    help='List of terms to search on KSL classifieds. '
                    'Use quotes for multiword searches')
     p.add_argument('-c', '--category', default=None,
