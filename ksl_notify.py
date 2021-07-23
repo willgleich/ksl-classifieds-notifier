@@ -218,8 +218,21 @@ def main(args):
                 raise
         time.sleep(loop_delay)
 
+class EnvDefault(argparse.Action):
+    def __init__(self, envvar, required=True, default=None, **kwargs):
+        if not default and envvar:
+            if envvar in os.environ:
+                default = os.environ[envvar]
+        if required and default:
+            required = False
+        super(EnvDefault, self).__init__(default=default, required=required,
+                                         **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
 
 if __name__ == '__main__':
+    print(os.environ)
     p = argparse.ArgumentParser(
         description=('ksl_notify - command line utility to notify of '
                      'new KSL classifieds ads')
